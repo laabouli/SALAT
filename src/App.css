@@ -8,6 +8,10 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  html {
+    direction: rtl;
+  }
+
   .App-logo {
     animation: App-logo-spin infinite 20s linear;
   }
