@@ -11,6 +11,7 @@ import axios from "axios";
 import { wait } from "@testing-library/user-event/dist/utils";
 import { useState, useEffect } from "react";
 import { useForkRef } from "@mui/material";
+import moment from "moment/moment";
 
 export default function MainContent() {
   //States
@@ -26,6 +27,11 @@ export default function MainContent() {
     displayName: "Tanger",
     apiName: "MA-01",
   });
+
+  const [today, setToday] = useState("");
+
+  //for time
+  const [timer, setTimer] = useState(10);
 
   const avilableCities = [
     {
@@ -44,17 +50,38 @@ export default function MainContent() {
 
   const getTimings = async () => {
     const response = await axios.get(
-      "https://api.aladhan.com/v1/timingsByCity?country=MAR&city=Tetouan"
+      `https://api.aladhan.com/v1/timingsByCity?country=MAR&city=${selectedCity.apiName}`
     );
 
     setTimings(response.data.data.timings);
   };
   useEffect(() => {
     getTimings();
+  }, [selectedCity]);
+
+  useEffect(() => {
+    let interval = setInterval(() => {
+      console.log("calling timer");
+
+      setupCountdownTimer();
+    }, 1000);
+    const t = moment();
+    setToday(t.format("MMMM Do YYYY | h:mm"));
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   //  const data = wait axios.get("https://api.aladhan.com/v1/timingsByCity?country=MAR&city=Tetouan");
 
+  const setupCountdownTimer = () => {
+    const momentNow = moment();
+
+    let nextPrayer = null;
+    const Isha = timings["Isha"];
+    const IshaMoment = moment(Isha, "hh:mm");
+    console.log(momentNow.isAfter(IshaMoment));
+  };
   const handleCityChange = (event) => {
     const cityObject = avilableCities.find((city) => {
       return city.apiName == event.target.value;
@@ -68,7 +95,7 @@ export default function MainContent() {
       <Grid container>
         <Grid xs={6}>
           <div>
-            <h2>Lorem, ipsum dolor.</h2>
+            <h2>{today}</h2>
             <h1>{selectedCity.displayName}</h1>
           </div>
         </Grid>
@@ -111,7 +138,9 @@ export default function MainContent() {
           >
             {avilableCities.map((city) => {
               return (
-                <MenuItem value={city.apiName}>{city.displayName}</MenuItem>
+                <MenuItem value={city.apiName} key={city.apiName}>
+                  {city.displayName}
+                </MenuItem>
               );
             })}
           </Select>
