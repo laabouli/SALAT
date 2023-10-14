@@ -14,6 +14,8 @@ import { useForkRef } from "@mui/material";
 import moment from "moment/moment";
 
 export default function MainContent() {
+  const [remainingTime, setRemainigTime] = useState("");
+
   //States
   const [timings, setTimings] = useState({
     Fajr: "06:28",
@@ -31,7 +33,7 @@ export default function MainContent() {
   const [today, setToday] = useState("");
 
   //for time
-  const [timer, setTimer] = useState(10);
+  // const [timer, setTimer] = useState(10);
 
   const avilableCities = [
     {
@@ -46,6 +48,16 @@ export default function MainContent() {
       displayName: "Laâyoune",
       apiName: "MA-11",
     },
+  ];
+
+  //for timing
+  const [nextPrayerIndex, setNextPrayerIndex] = useState(0);
+  const prayersArray = [
+    { key: "Fajr", displayName: "al fajr" },
+    { key: "Dhuhr", displayName: "Dhuhr" },
+    { key: "Asr", displayName: "Asr" },
+    { key: "Maghrib", displayName: "Maghrib" },
+    { key: "Isha", displayName: "Isha" },
   ];
 
   const getTimings = async () => {
@@ -65,19 +77,78 @@ export default function MainContent() {
 
       setupCountdownTimer();
     }, 1000);
+
     const t = moment();
     setToday(t.format("MMMM Do YYYY | h:mm"));
     return () => {
       clearInterval(interval);
     };
-  }, []);
-
-  //  const data = wait axios.get("https://api.aladhan.com/v1/timingsByCity?country=MAR&city=Tetouan");
+  }, [timings]);
 
   const setupCountdownTimer = () => {
     const momentNow = moment();
 
-    let nextPrayer = null;
+    let prayerIndex = 2;
+    if (
+      momentNow.isAfter(moment(timings["Fajr"], "hh:mm")) &&
+      momentNow.isBefore(moment(timings["Dhuhr"], "hh:mm"))
+    ) {
+      prayerIndex = 1;
+    } else if (
+      momentNow.isAfter(moment(timings["Dhuhr"], "hh:mm")) &&
+      momentNow.isBefore(moment(timings["Asr"], "hh:mm"))
+    ) {
+      prayerIndex = 2;
+    } else if (
+      momentNow.isAfter(moment(timings["Asr"], "hh:mm")) &&
+      momentNow.isBefore(moment(timings["Maghrib"], "hh:mm"))
+    ) {
+      prayerIndex = 3;
+    } else if (
+      momentNow.isAfter(moment(timings["Maghrib"], "hh:mm")) &&
+      momentNow.isBefore(moment(timings["Isha"], "hh:mm"))
+    ) {
+      prayerIndex = 4;
+    } else {
+      prayerIndex = 0;
+    }
+
+    //7adedna sala li maja
+    setNextPrayerIndex(prayerIndex);
+
+    const nextPrayerObject = prayersArray[prayerIndex];
+    const nextPrayerTime = timings[nextPrayerObject.key];
+    const nextPrayerTimeMoment = moment(nextPrayerTime, "hh:mm");
+
+    let remainingTime = moment(nextPrayerTime, "hh:mm").diff(momentNow);
+
+    if (remainingTime < 0) {
+      const midnightDiff = moment("23:59:59", "hh:mm:ss").diff(momentNow);
+
+      const fajrToMidnightDiff = nextPrayerTimeMoment.diff(
+        moment("00:00:00", "hh:mm:ss")
+      );
+      const totalDiffernce = midnightDiff + fajrToMidnightDiff;
+      remainingTime = totalDiffernce;
+    }
+
+    console.log(remainingTime);
+
+    const durationRemainingTime = moment.duration(remainingTime);
+    setRemainigTime(
+      `${durationRemainingTime.seconds()}:
+      ${durationRemainingTime.minutes()}:
+    ${durationRemainingTime.hours()}`
+    );
+    console.log(
+      "duration ",
+      durationRemainingTime.hours(),
+      durationRemainingTime.minutes(),
+      durationRemainingTime.seconds()
+    );
+
+    console.log(momentNow.isBefore(moment(timings["Fajr"], "hh:mm")));
+
     const Isha = timings["Isha"];
     const IshaMoment = moment(Isha, "hh:mm");
     console.log(momentNow.isAfter(IshaMoment));
@@ -101,8 +172,10 @@ export default function MainContent() {
         </Grid>
         <Grid xs={6}>
           <div>
-            <h2>Lorem, ipsum dolor.</h2>
-            <h1>Lorem, ipsum.</h1>
+            <h2>
+              Next prayer for Salat {prayersArray[nextPrayerIndex].displayName}
+            </h2>
+            <h1>{remainingTime}</h1>
           </div>
         </Grid>
       </Grid>
